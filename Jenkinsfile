@@ -60,25 +60,11 @@ pipeline {
                 sh "trivy image ${IMAGE_NAME}:${IMAGE_TAG}"
             }
         }
-
-        // Add ECR stage later
-
-        // Add Helm stage later
-
-        // ArgoCD will deploy automatically
     }
 
     post {
         always {
             echo 'Pipeline execution finished.'
-        }
-
-        success {
-            echo 'Pipeline succeeded!'
-        }
-
-        failure {
-            echo 'Pipeline failed!'
         }
     }
 }
