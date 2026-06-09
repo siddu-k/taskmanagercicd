@@ -62,6 +62,27 @@ pipeline {
         }
     }
 
+    stage('Push to ECR') {
+    steps {
+        withCredentials([[
+            $class: 'AmazonWebServicesCredentialsBinding',
+            credentialsId: 'aws-creds'
+        ]]) {
+
+            sh '''
+            aws ecr get-login-password --region ap-south-1 | \
+            docker login --username AWS --password-stdin 484907501702.dkr.ecr.ap-south-1.amazonaws.com
+
+            docker tag taskmanager:${BUILD_NUMBER} \
+            484907501702.dkr.ecr.ap-south-1.amazonaws.com/taskmanager:${BUILD_NUMBER}
+
+            docker push \
+            484907501702.dkr.ecr.ap-south-1.amazonaws.com/taskmanager:${BUILD_NUMBER}
+            '''
+        }
+    }
+}
+
     post {
         always {
             echo 'Pipeline execution finished.'
