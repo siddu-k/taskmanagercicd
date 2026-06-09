@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: taskmanager-deployment
+  labels:
+    app: taskmanager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: taskmanager
+  template:
+    metadata:
+      labels:
+        app: taskmanager
+    spec:
+      containers:
+      - name: taskmanager
+        image: taskmanager:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+        env:
+        # In a real environment, use Secrets for passwords
+        - name: DB_HOST
+          value: "task-postgres-db"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_NAME
+          value: "taskdb"
+        - name: DB_USER
+          value: "postgres"
+        - name: DB_PASSWORD
+          value: "postgres"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"

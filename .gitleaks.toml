@@ -1,0 +1,10 @@
+title = "gitleaks config"
+
+[allowlist]
+description = "Allowlist for known mock secrets or false positives"
+# You can add regexes here if gitleaks catches safe test data
+paths = [
+    "pom.xml",
+    "k8s/",
+    "helm/"
+]
