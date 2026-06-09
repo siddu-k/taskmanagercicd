@@ -1,44 +1,84 @@
 pipeline {
     agent any
 
+    tools {
+        jdk 'jdk17'
+        maven 'maven3'
+    }
+
     environment {
         IMAGE_NAME = 'taskmanager'
-        IMAGE_TAG = "${env.BUILD_ID}"
+        IMAGE_TAG = "${BUILD_NUMBER}"
     }
 
     stages {
-        stage('Secret Scan') {
+
+        stage('Checkout') {
             steps {
-                // Assuming gitleaks is installed on the Jenkins agent
-                sh 'gitleaks detect --source . -v'
-            }
-        }
-        
-        stage('Build Docker Image') {
-            steps {
-                echo 'Building Docker Image...'
-                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} -t ${IMAGE_NAME}:latest ."
+                checkout scm
             }
         }
 
-        stage('Deploy (Mock)') {
+        stage('Build') {
             steps {
-                echo "Deploying ${IMAGE_NAME}:${IMAGE_TAG} to Kubernetes..."
-                // In a real pipeline, you would use 'helm upgrade' or 'kubectl apply' here
-                // sh "helm upgrade --install taskmanager ./helm/taskmanager-chart --set image.tag=${IMAGE_TAG}"
+                sh 'mvn clean package -DskipTests'
             }
         }
+
+        stage('Test') {
+            steps {
+                sh 'mvn test'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonarqube') {
+                    sh 'mvn sonar:sonar'
+                }
+            }
+        }
+
+        stage('Secret Scan') {
+            steps {
+                sh 'gitleaks detect --source . -v'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh """
+                docker build \
+                -t ${IMAGE_NAME}:${IMAGE_TAG} \
+                -t ${IMAGE_NAME}:latest .
+                """
+            }
+        }
+
+        stage('Trivy Scan') {
+            steps {
+                sh "trivy image ${IMAGE_NAME}:${IMAGE_TAG}"
+            }
+        }
+
+        // Add ECR stage later
+
+        // Add Helm stage later
+
+        // ArgoCD will deploy automatically
     }
 
     post {
         always {
             echo 'Pipeline execution finished.'
         }
+
         success {
             echo 'Pipeline succeeded!'
         }
+
         failure {
-            echo 'Pipeline failed! Please check logs.'
+            echo 'Pipeline failed!'
         }
     }
 }
