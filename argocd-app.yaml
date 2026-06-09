@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: taskmanager-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/siddu-k/taskmanager-gitops.git'
+    path: helm/taskmanager-chart
+    targetRevision: HEAD
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
